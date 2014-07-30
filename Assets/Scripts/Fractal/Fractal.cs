@@ -13,6 +13,24 @@ public class Fractal : MonoBehaviour {
 	private int depth = 0;
 	private float degrees = 0.0f;
 	private bool isRoot = true;
+	
+	private Vector3[] childDirections = {
+		Vector3.up,
+		Vector3.left,
+		Vector3.right,
+		Vector3.forward,
+		Vector3.back,
+		Vector3.down  // For root object only
+	};
+	
+	private Quaternion[] childOrientations = {
+		Quaternion.identity,
+		Quaternion.Euler (0f, 0f, 90f),
+		Quaternion.Euler (0f, 0f, -90f),
+		Quaternion.Euler (90f, 0f, 0f),
+		Quaternion.Euler (-90f, 0f, 0f),
+		Quaternion.Euler (180f, 0f, 0f)  // For root object only
+	};
 
 	// Use this for initialization
 	void Start () {
@@ -24,29 +42,14 @@ public class Fractal : MonoBehaviour {
 	}
 	
 	public IEnumerator SpawnChildren() {
-		yield return new WaitForSeconds(spawnRate);
-		new GameObject("Child").AddComponent<Fractal>()
-			.Initialize(this, Vector3.right, Quaternion.Euler(0f, 0f, -90f));
-		yield return new WaitForSeconds(spawnRate);
-		new GameObject("Child").AddComponent<Fractal>()
-			.Initialize(this, Vector3.up, Quaternion.identity);
-		yield return new WaitForSeconds(spawnRate);
-		new GameObject("Child").AddComponent<Fractal>()
-			.Initialize(this, Vector3.left, Quaternion.Euler (0f, 0f, 90f));
-		yield return new WaitForSeconds(spawnRate);
-		new GameObject("Child").AddComponent<Fractal>()
-			.Initialize(this, Vector3.back, Quaternion.Euler (-90f, 0f, 0f));
-		yield return new WaitForSeconds(spawnRate);
-		new GameObject("Child").AddComponent<Fractal>()
-			.Initialize(this, Vector3.forward, Quaternion.Euler (90f, 0f, 0f));
-		if (isRoot) {
-			yield return new WaitForSeconds(spawnRate);
-			new GameObject("Child").AddComponent<Fractal>()
-				.Initialize(this, Vector3.down, Quaternion.Euler (180f, 0f, 0f));
+		int numToSpawn = isRoot ? childDirections.Length : childDirections.Length - 1;
+		for (int i = 0; i < numToSpawn; i++) {
+			yield return new WaitForSeconds(Random.Range (0.1f, spawnRate));
+			new GameObject("Child").AddComponent<Fractal>().Initialize(this, i);
 		}
 	}
 	
-	public void Initialize(Fractal parent, Vector3 direction, Quaternion orientation) {
+	public void Initialize(Fractal parent, int childIndex) {
 		mesh = parent.mesh;
 		material = parent.material;
 		maxDepth = parent.maxDepth;
@@ -56,8 +59,8 @@ public class Fractal : MonoBehaviour {
 		
 		transform.parent = parent.transform;
 		transform.localScale = Vector3.one * childScale;
-		transform.localPosition = direction * (0.5f + 0.5f * childScale);
-		transform.localRotation = orientation;
+		transform.localPosition = childDirections[childIndex] * (0.5f + 0.5f * childScale);
+		transform.localRotation = childOrientations[childIndex];
 	}
 	
 	// Update is called once per frame
